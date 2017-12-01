@@ -1,0 +1,66 @@
+{
+  "name": "mobx-preact-lite",
+  "version": "0.1.0",
+  "description": "Lightweight Mobx binding specifically for Preact",
+  "main": "lib/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/philmander/mobx-preact-lote.git"
+  },
+  "scripts": {
+    "lint": "eslint src test --fix",
+    "prepublish": "npm run lint && npm test && npm run build",
+    "build": "babel src --out-dir lib",
+    "test": "jest"
+  },
+  "keywords": [
+    "preact",
+    "mobx-preact",
+    "mobx",
+    "connect",
+    "observer",
+    "bindings",
+    "reactive"
+  ],
+  "author": "Phil Mander",
+  "license": "MIT",
+  "peerDependencies": {
+    "mobx": "3.x",
+    "preact": ">=8"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.25.0",
+    "babel-eslint": "^7.2.3",
+    "babel-jest": "^21.2.0",
+    "babel-loader": "^6.4.1",
+    "babel-plugin-module-resolver": "^2.7.1",
+    "babel-plugin-transform-decorators-legacy": "^1.3.4",
+    "babel-plugin-transform-react-jsx": "^6.24.1",
+    "babel-preset-env": "^1.5.2",
+    "babel-preset-stage-1": "^6.24.1",
+    "eslint": "^4.5.0",
+    "eslint-plugin-jest": "^21.3.2",
+    "eslint-plugin-react": "^7.5.1",
+    "jest": "^21.2.1",
+    "mobx": "^3.3.2",
+    "preact": "^8.2.6",
+    "preact-compat": "^3.17.0",
+    "preact-render-to-string": "^3.7.0"
+  },
+  "babel": {
+    "presets": [
+      "env",
+      "stage-1"
+    ],
+    "plugins": [
+      [
+        "transform-react-jsx",
+        {
+          "pragma": "h"
+        }
+      ],
+      "transform-decorators-legacy"
+    ]
+  }
+}

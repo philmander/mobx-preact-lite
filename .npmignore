@@ -1,0 +1,9 @@
+.git
+.editorconfig
+.gitignore
+.idea
+src
+test
+.DS_Store
+.eslintrc.js
+*.tgz
