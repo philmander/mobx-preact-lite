@@ -1,5 +1,6 @@
 import { Atom, Reaction, extras } from 'mobx';
 import { Component } from 'preact';
+import { isStateless, makeDisplayName } from './utils/utils';
 
 let isUsingStaticRendering = false;
 
@@ -55,14 +56,11 @@ function isObjectShallowModified(prev, next) {
  */
 const reactiveMixin = {
     componentWillMount: function() {
-        if (isUsingStaticRendering === true) return;
+        if (isUsingStaticRendering === true) {
+            return;
+        }
         // Generate friendly name for debugging
-        const initialName =
-            this.displayName ||
-            this.name ||
-            (this.constructor && (this.constructor.displayName || this.constructor.name)) ||
-            '<component>';
-        const rootNodeID = '';
+        const initialName = makeDisplayName(this);
 
         /**
          * If props are shallowly modified, react will render anyway,
@@ -109,13 +107,15 @@ const reactiveMixin = {
         let isRenderingPending = false;
 
         const initialRender = () => {
-            reaction = new Reaction(`${initialName}#${rootNodeID}.render()`, () => {
+            reaction = new Reaction(`${initialName}.render()`, () => {
                 if (!isRenderingPending) {
                     // N.B. Getting here *before mounting* means that a component constructor has side effects (see the relevant test in misc.js)
                     // This unidiomatic React usage but React will correctly warn about this so we continue as usual
                     // See #85 / Pull #44
                     isRenderingPending = true;
-                    if (typeof this.componentWillReact === 'function') this.componentWillReact(); // TODO: wrap in action?
+                    if (typeof this.componentWillReact === 'function') {
+                        this.componentWillReact();
+                    } // TODO: wrap in action?
                     if (this.__$mobxIsUnmounted !== true) {
                         // If we are unmounted at this point, componentWillReact() had a side effect causing the component to unmounted
                         // TODO: remove this check? Then react will properly warn about the fact that this should not happen? See #73
@@ -123,11 +123,15 @@ const reactiveMixin = {
                         let hasError = true;
                         try {
                             isForcingUpdate = true;
-                            if (!skipRender) Component.prototype.forceUpdate.call(this);
+                            if (!skipRender) {
+                                Component.prototype.forceUpdate.call(this);
+                            }
                             hasError = false;
                         } finally {
                             isForcingUpdate = false;
-                            if (hasError) reaction.dispose();
+                            if (hasError) {
+                                reaction.dispose();
+                            }
                         }
                     }
                 }
@@ -159,7 +163,9 @@ const reactiveMixin = {
     },
 
     componentWillUnmount: function() {
-        if (isUsingStaticRendering === true) return;
+        if (isUsingStaticRendering === true) {
+            return;
+        }
         this.render.$mobx && this.render.$mobx.dispose();
         this.__$mobxIsUnmounted = true;
     },
@@ -192,6 +198,10 @@ const reactiveMixin = {
  * Observer function / decorator
  */
 export function observer(componentClass) {
+    if (typeof componentClass === 'string') {
+        throw new Error('Store names should be provided as array');
+    }
+
     if (componentClass.isMobxInjector === true) {
         logger.warn(
             'Mobx observer: You are trying to use \'observer\' on a component that already has \'inject\'. Please apply \'observer\' before applying \'inject\''
@@ -199,16 +209,10 @@ export function observer(componentClass) {
     }
 
     // Stateless function component:
-    // If it is function but doesn't seem to be a react class constructor,
-    // wrap it to a react class automatically
-    const isStatelssFunc =
-        typeof componentClass === 'function' &&
-        (!componentClass.prototype || !componentClass.prototype.render) &&
-        !Component.isPrototypeOf(componentClass);
-    if (isStatelssFunc) {
+    if (isStateless(componentClass)) {
         return observer(
             class extends Component {
-                static displayName = componentClass.displayName || componentClass.name || '<component>';
+                static displayName = makeDisplayName(componentClass)
                 render() {
                     return componentClass.call(this, this.props, this.context);
                 }

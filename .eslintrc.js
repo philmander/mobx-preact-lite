@@ -27,6 +27,14 @@ module.exports = {
         }
     },
     "rules": {
+        "curly" : [
+            "error", "all"
+        ],
+        "brace-style": [
+            1, "1tbs", {
+            "allowSingleLine": false
+        }
+        ],
         "indent": [
             "error",
             4
@@ -69,6 +77,9 @@ module.exports = {
             "off"
         ],
         "react/jsx-key" : [
+            "off"
+        ],
+        "react/display-name" : [
             "off"
         ],
         "react/no-direct-mutation-state" : [

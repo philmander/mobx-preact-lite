@@ -1,8 +1,15 @@
+/* eslint no-console: 0 */
+
 import { h, render, Component } from 'preact';
 import { observable, action, computed, transaction, extras, extendObservable } from 'mobx';
 import { createClass } from 'preact-compat';
 import renderToString  from 'preact-render-to-string';
-import { observer, useStaticRendering, Observer } from '../src/observer';
+import { observer, useStaticRendering, Observer, inject } from '../';
+import { pause, disabledTest } from './test-util';
+
+const logger = console; // eslint-disable-line no-console
+
+test.disable = disabledTest;
 
 const store = observable({
     todos: [
@@ -279,52 +286,50 @@ test('changing state in render should fail', done => {
     extras.resetGlobalState();
 });
 
-// inject not yet supported
-// test.skip('component should not be inject', () => {
-//     const msg = [];
-//     const baseWarn = console.warn;
-//     console.warn = m => msg.push(m);
-//
-//     observer(
-//         inject('foo')(
-//             createClass({
-//                 render() {
-//                     return <div>context:{this.props.foo}</div>;
-//                 },
-//             })
-//         )
-//     );
-//
-//     expect(msg.length).toBe(1);
-//     console.warn = baseWarn;
-// });
+test('component should not be inject', () => {
+    const msg = [];
+    const baseWarn = logger.warn;
+    console.warn = m => msg.push(m);
 
-// inject not yet supported
-// test.skip('observer component can be injected', () => {
-//     const msg = [];
-//     const baseWarn = console.warn;
-//     console.warn = m => msg.push(m);
-//
-//     inject('foo')(
-//         observer(
-//             createClass({
-//                 render: () => null,
-//             })
-//         )
-//     );
-//
-//     // N.B, the injected component will be observer since mobx-react 4.0!
-//     inject(() => {})(
-//         observer(
-//             createClass({
-//                 render: () => null,
-//             })
-//         )
-//     );
-//
-//     expect(msg.length).toBe(0);
-//     console.warn = baseWarn;
-// });
+    observer(
+        inject('foo')(
+            createClass({
+                render() {
+                    return <div>context:{this.props.foo}</div>;
+                },
+            })
+        )
+    );
+
+    expect(msg.length).toBe(1);
+    console.warn = baseWarn;
+});
+
+test('observer component can be injected', () => {
+    const msg = [];
+    const baseWarn = console.warn;
+    logger.warn = m => msg.push(m);
+
+    inject('foo')(
+        observer(
+            createClass({
+                render: () => null,
+            })
+        )
+    );
+
+    // N.B, the injected component will be observer since mobx-react 4.0!
+    inject(() => {})(
+        observer(
+            createClass({
+                render: () => null,
+            })
+        )
+    );
+
+    expect(msg.length).toBe(0);
+    logger.warn = baseWarn;
+});
 
 test('124 - react to changes in this.props via computed', async () => {
     const Comp = observer(
@@ -589,43 +594,46 @@ test('parent / childs render in the right order', () => {
     expect(events).toEqual(['parent', 'child', 'child', 'parent']);
 });
 
-// onErorr not implemented
+/*eslint-disable */
 // FIXME: test seems to work correctly, but errors cannot tested atm with DOM rendering
-// test.skip('206 - @observer should produce usefull errors if it throws', t => {
-//     const data = observable({ x: 1 });
-//     let renderCount = 0;
-//
-//     const emmitedErrors = [];
-//     const disposeErrorsHandler = onError(error => emmitedErrors.push(error));
-//
-//     @observer
-//     class Child extends React.Component {
-//         render() {
-//             renderCount++;
-//             if (data.x === 42) throw new Error('Oops!');
-//             return <span>{data.x}</span>;
-//         }
-//     }
-//
-//     render(<Child />, testRoot);
-//     expects(renderCount).toBe(1);
-//
-//     try {
-//         data.x = 42;
-//         expect(true).toBe(false);
-//     } catch (e) {
-//         const lines = e.stack.split('\n');
-//         expect(lines[0]).toBe('Error: Oops!');
-//         expect(lines[1].indexOf('at Child.render')).toBe(4);
-//         expect(renderCount).toBe(2);
-//     }
-//
-//     data.x = 3; // component recovers!
-//     expect(renderCount).toBe(3);
-//
-//     expect(emmitedErrors).toEqual([new Error('Oops!')]);
-//     disposeErrorsHandler();
-// });
+test.disable('206 - @observer should produce usefull errors if it throws', () => {
+    const data = observable({ x: 1 });
+    let renderCount = 0;
+
+    const emmitedErrors = [];
+    const disposeErrorsHandler = onError(error => emmitedErrors.push(error));
+
+    @observer
+    class Child extends Component {
+        render() {
+            renderCount++;
+            if (data.x === 42) {
+                throw new Error('Oops!');
+            }
+            return <span>{data.x}</span>;
+        }
+    }
+
+    render(<Child />, testRoot);
+    expect(renderCount).toBe(1);
+
+    try {
+        data.x = 42;
+        expect(true).toBe(false);
+    } catch (e) {
+        const lines = e.stack.split('\n');
+        expect(lines[0]).toBe('Error: Oops!');
+        expect(lines[1].indexOf('at Child.render')).toBe(4);
+        expect(renderCount).toBe(2);
+    }
+
+    data.x = 3; // component recovers!
+    expect(renderCount).toBe(3);
+
+    expect(emmitedErrors).toEqual([new Error('Oops!')]);
+    disposeErrorsHandler();
+}, 'onError is not yet implemented');
+/*eslint-enable */
 
 test('195 - async componentWillMount does not work', async () => {
     const renderedValues = [];
@@ -656,7 +664,3 @@ test('195 - async componentWillMount does not work', async () => {
 
     expect(renderedValues).toEqual([0, 1]);
 });
-
-async function pause(time = 0) {
-    return new Promise(resolve => { setTimeout(resolve, time); });
-}
