@@ -1,6 +1,7 @@
 # mobx-preact-lite
 
 [![Build Status](https://travis-ci.org/mobxjs/mobx-preact-lite.svg?branch=master)](https://travis-ci.org/mobxjs/mobx-preact-lite)
+[![npm](https://img.shields.io/npm/v/mobx-preact-lite.svg)](http://npm.im/mobx-preact-lite)
 
 [Mobx](https://mobxjs.github.io/mobx) bindings specifically for [Preact](https://preactjs.com/).
 
